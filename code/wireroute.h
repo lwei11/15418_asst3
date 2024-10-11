@@ -45,7 +45,6 @@ struct Wire {
   validate_wire_t to_validate_format(void) const;
 };
 
-
 struct wr_checker {
   std::vector<Wire> wires;
   std::vector<std::vector<int>> occupancies;
