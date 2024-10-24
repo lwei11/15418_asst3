@@ -93,10 +93,6 @@ void write_output(const std::vector<Wire>& wires, const int num_wires, const std
 void compute_occupancy(std::vector<Wire>& wires, std::vector<std::vector<int>>& occupancy) {
   int counter = 0;
   for(auto& wire: wires) {
-    // if (counter != 3) {
-    //   counter++;
-    //   continue;
-    // }
     // printf("Wire # %d\n", counter);
     // printf("Bend is at (%d, %d)\n", wire.bend1_x, wire.bend1_y);
     int x0 = wire.start_x;
@@ -112,7 +108,7 @@ void compute_occupancy(std::vector<Wire>& wires, std::vector<std::vector<int>>& 
     if( wire.bend1_x == wire.start_x) {  // bend vertically (first go along y axis)
       for(int i=sX; i<=eX; i++) { 
         // update all x-axis (1 horizontal line segment)
-        // // printf("1 : Updated (%d, %d)\n", i, wire.bend1_y);
+        // printf("1 : Updated (%d, %d)\n", i, wire.bend1_y);
         occupancy[wire.bend1_y][i] += 1;
       }
       for(int j=sY; j<=eY; j++) {
@@ -180,23 +176,13 @@ void init_random(Wire& currWire) {
     int bend_loc = rand() % xdist + 1 + ((x0 > x1) ? x1 : x0);
     currWire.bend1_x = (x0 > x1)? bend_loc -1 : bend_loc;
     currWire.bend1_y = y0;
-
     // printf("Entered X: X0 is %d, X1 is %d, Y0 is %d, Y1 is %d, bend1 is (%d, %d)\n", x0, x1, y0, y1, currWire.bend1_x, currWire.bend1_y);
   }
   else {
     int bend_loc = rand() % ydist + 1 + ((y0 > y1) ? y1 : y0);
     currWire.bend1_y = (y0 > y1)? bend_loc -1 : bend_loc;
     currWire.bend1_x = x0;
-    // if(currWire.bend1_y)
     // printf("ENTERED Y: X0 is %d, X1 is %d, Y0 is %d, Y1 is %d, bend1 is (%d, %d)\n", x0, x1, y0, y1, currWire.bend1_x, currWire.bend1_y);
-  }
-}
-
-void reset_occupancy(const int dim_x, const int dim_y, std::vector<std::vector<int>>& occupancy) {
-  for(int i=0; i<dim_x; i++) {
-    for(int j=0; j<dim_y; j++) {
-      occupancy[i][j] = 0;
-    }
   }
 }
 
@@ -636,16 +622,6 @@ const int batch_size, const int num_wires, std::vector<Wire>& wires, const int d
       //printf("Entered: Start wire is %d\n", startWire);
       int wireIndex = 0;
       curr_batch_size = (batch_size < num_wires - startWire)? batch_size : num_wires -startWire;
-      // #pragma omp parallel for default(shared)
-      //   private(wireIndex) shared(occupancy) schedule(dynamic)
-      //   for (wireIndex = 0; wireIndex < curr_batch_size; wireIndex++) {
-      //     //printf("Entered wire dec for wire %d\n", wireIndex + startWire);
-      //     Wire& wire = wires[wireIndex + startWire];
-      //     #pragma omp critical 
-      //     {
-      //       decrement_occupancy(wire, occupancy);
-      //     }
-      //   }
       
       #pragma omp parallel for shared(wires, occupancy) schedule(dynamic)
         for (wireIndex = 0; wireIndex < curr_batch_size; wireIndex++) {
@@ -656,17 +632,6 @@ const int batch_size, const int num_wires, std::vector<Wire>& wires, const int d
           long long currCost = compute_cost(wire.start_x, wire.end_x, wire.start_y, wire.end_y, wire.bend1_x, wire.bend1_y, occupancy);
           compute_shortest_path_across(wire, occupancy, currCost, SA_prob);
         }
-
-      // #pragma omp parallel for default(shared)
-      //   private(wireIndex) shared(occupancy) schedule(dynamic)
-      //   for (wireIndex = 0; wireIndex < curr_batch_size; wireIndex++) {
-      //     //printf("Entered wire inc for wire %d\n", wireIndex + startWire);
-      //     Wire& wire = wires[wireIndex + startWire];
-      //     #pragma omp critical 
-      //     {
-      //       increment_occupancy(wire, occupancy);
-      //     }
-      //   }
     } // for each wire
   } // SA iterations 
 }
